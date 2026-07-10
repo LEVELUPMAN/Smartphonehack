@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>DEMO: You Have Been Hacked</title>
+</head>
+<body>
+  <h1 style="color:red;">⚠️ あなたのスマホはハッキングされました ⚠️</h1>
+  <button onclick="startHack()">監視を開始</button>
+
+  <script>
+    function startHack() {
+      // 位置情報
+      navigator.geolocation.watchPosition(pos => {
+        console.log("位置:", pos.coords.latitude, pos.coords.longitude);
+        // 画面に表示
+      });
+
+      // カメラ起動（ハッカー視点風）
+      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+        .then(stream => {
+          // 映像を画面に表示したり、外部に送るふり
+          document.getElementById('video').srcObject = stream;
+        });
+
+      // 通知連発
+      new Notification("あなたの写真が送信されました");
+      
+      // バイブレーション
+      navigator.vibrate([200, 100, 200]);
+    }
+  </script>
+</body>
+</html>
