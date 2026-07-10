@@ -1,33 +1,85 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-  <title>DEMO: You Have Been Hacked</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>スマホハッキング デモ</title>
+  <style>
+    body { font-family: Arial; text-align: center; background: #000; color: #0f0; padding: 20px; }
+    h1 { color: red; }
+    #log { background: #111; padding: 15px; margin: 20px; height: 300px; overflow-y: scroll; text-align: left; }
+    button { padding: 15px 30px; font-size: 18px; background: red; color: white; border: none; margin: 10px; }
+  </style>
 </head>
 <body>
-  <h1 style="color:red;">⚠️ あなたのスマホはハッキングされました ⚠️</h1>
-  <button onclick="startHack()">監視を開始</button>
+  <h1>⚠️ あなたのスマホはハッキングされました ⚠️</h1>
+  <p>ハッカー視点で情報を収集中...</p>
+  
+  <button onclick="startHack()">監視を開始する</button>
+  <button onclick="stopHack()">停止</button>
+
+  <div id="log"></div>
+  <video id="video" width="100%" autoplay playsinline></video>
 
   <script>
+    let logElement = document.getElementById('log');
+    let videoElement = document.getElementById('video');
+
+    function log(message) {
+      const time = new Date().toLocaleTimeString();
+      logElement.innerHTML += `<p>[${time}] ${message}</p>`;
+      logElement.scrollTop = logElement.scrollHeight;
+    }
+
     function startHack() {
+      log("接続中... ターゲットデバイス特定");
+
       // 位置情報
-      navigator.geolocation.watchPosition(pos => {
-        console.log("位置:", pos.coords.latitude, pos.coords.longitude);
-        // 画面に表示
+      if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(
+          (position) => {
+            log(`位置情報取得: 緯度 ${position.coords.latitude.toFixed(4)}, 経度 ${position.coords.longitude.toFixed(4)}`);
+          },
+          (error) => log("位置情報エラー: " + error.message)
+        );
+      }
+
+      // カメラ + マイク
+      navigator.mediaDevices.getUserMedia({ 
+        video: true, 
+        audio: true 
+      }).then(stream => {
+        videoElement.srcObject = stream;
+        log("📷 カメラとマイクにアクセス成功 - リアルタイム監視中");
+      }).catch(err => {
+        log("カメラ/マイクアクセス拒否: " + err.message);
       });
 
-      // カメラ起動（ハッカー視点風）
-      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-        .then(stream => {
-          // 映像を画面に表示したり、外部に送るふり
-          document.getElementById('video').srcObject = stream;
-        });
+      // 通知
+      if (Notification.permission === "granted") {
+        new Notification("プライベートデータが外部に送信されました");
+      } else if (Notification.permission !== "denied") {
+        Notification.requestPermission();
+      }
 
-      // 通知連発
-      new Notification("あなたの写真が送信されました");
-      
       // バイブレーション
-      navigator.vibrate([200, 100, 200]);
+      if (navigator.vibrate) {
+        navigator.vibrate([500, 200, 500, 200, 500]);
+        log("📳 デバイスを振動させています");
+      }
+
+      log("🚨 すべてのセンサーにアクセス中... データ窃取開始");
     }
+
+    function stopHack() {
+      log("監視を停止しました");
+      if (videoElement.srcObject) {
+        videoElement.srcObject.getTracks().forEach(track => track.stop());
+      }
+    }
+
+    // 初回アクセス時に通知許可を促す
+    log("デモページがロードされました。ボタンを押して開始してください。");
   </script>
 </body>
 </html>
